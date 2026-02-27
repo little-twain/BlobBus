@@ -24,6 +24,7 @@ Deliver BlobBus according to `codex.md` milestones with incremental verifiable c
 - 2026-02-27: re-enabled strict govulncheck gating in `security.yml` (no `continue-on-error`) for validation run.
 - 2026-02-27: aligned CI/Security/Docker toolchains to Go `1.26.x` to match strict vulnerability gating with actual build artifacts.
 - 2026-02-27: bumped CI golangci-lint to `latest` to resolve Go 1.26 export format compatibility (`unsupported version: 2`).
+- 2026-02-27: pinned lint job runtime to Go `1.24.x` because current golangci-lint binary toolchain cannot typecheck Go 1.26 stdlib exports.
 
 ## Notes
 - Commit cadence: milestone-based progress commits.
