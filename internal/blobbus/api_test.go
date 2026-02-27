@@ -108,6 +108,42 @@ func TestUploadGetHeadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestGetDefaultsContentTypeWhenMissing(t *testing.T) {
+	_, h := newTestStoreAndHandler(t, 1024)
+	payload := []byte("no-content-type")
+
+	uploaded := uploadBlob(t, h, payload, "")
+
+	getRR := httptest.NewRecorder()
+	getReq := httptest.NewRequest(http.MethodGet, "/v1/blobs/"+uploaded.ID, nil)
+	h.ServeHTTP(getRR, getReq)
+
+	if getRR.Code != http.StatusOK {
+		t.Fatalf("GET status = %d", getRR.Code)
+	}
+	if got := getRR.Header().Get("Content-Type"); got != "application/octet-stream" {
+		t.Fatalf("GET Content-Type = %q, want application/octet-stream", got)
+	}
+}
+
+func TestHeadOmitsContentTypeWhenMissing(t *testing.T) {
+	_, h := newTestStoreAndHandler(t, 1024)
+	payload := []byte("head-no-content-type")
+
+	uploaded := uploadBlob(t, h, payload, "")
+
+	headRR := httptest.NewRecorder()
+	headReq := httptest.NewRequest(http.MethodHead, "/v1/blobs/"+uploaded.ID, nil)
+	h.ServeHTTP(headRR, headReq)
+
+	if headRR.Code != http.StatusOK {
+		t.Fatalf("HEAD status = %d", headRR.Code)
+	}
+	if got := headRR.Header().Get("Content-Type"); got != "" {
+		t.Fatalf("HEAD Content-Type = %q, want empty", got)
+	}
+}
+
 func TestUploadMissingLengthReturns411(t *testing.T) {
 	_, h := newTestStoreAndHandler(t, 1024)
 
@@ -188,6 +224,42 @@ func TestFIFOEvictionByCapacity(t *testing.T) {
 	h.ServeHTTP(getB, httptest.NewRequest(http.MethodGet, "/v1/blobs/"+b.ID, nil))
 	if getB.Code != http.StatusOK {
 		t.Fatalf("B status = %d, want 200", getB.Code)
+	}
+}
+
+func TestMultipleEvictionsPreserveFIFOOrder(t *testing.T) {
+	_, h := newTestStoreAndHandler(t, 10)
+
+	a := uploadBlob(t, h, []byte("AAAA"), "")
+	b := uploadBlob(t, h, []byte("BBBB"), "")
+	c := uploadBlob(t, h, []byte("CCCC"), "")
+
+	// At this point A should be evicted (A+B exceeds cap when C is uploaded).
+	rrA := httptest.NewRecorder()
+	h.ServeHTTP(rrA, httptest.NewRequest(http.MethodGet, "/v1/blobs/"+a.ID, nil))
+	if rrA.Code != http.StatusNotFound {
+		t.Fatalf("A status = %d, want 404", rrA.Code)
+	}
+
+	// Upload D forcing eviction of B then C in FIFO order.
+	d := uploadBlob(t, h, []byte("DDDDDDD"), "")
+
+	rrB := httptest.NewRecorder()
+	h.ServeHTTP(rrB, httptest.NewRequest(http.MethodGet, "/v1/blobs/"+b.ID, nil))
+	if rrB.Code != http.StatusNotFound {
+		t.Fatalf("B status = %d, want 404", rrB.Code)
+	}
+
+	rrC := httptest.NewRecorder()
+	h.ServeHTTP(rrC, httptest.NewRequest(http.MethodGet, "/v1/blobs/"+c.ID, nil))
+	if rrC.Code != http.StatusNotFound {
+		t.Fatalf("C status = %d, want 404", rrC.Code)
+	}
+
+	rrD := httptest.NewRecorder()
+	h.ServeHTTP(rrD, httptest.NewRequest(http.MethodGet, "/v1/blobs/"+d.ID, nil))
+	if rrD.Code != http.StatusOK {
+		t.Fatalf("D status = %d, want 200", rrD.Code)
 	}
 }
 

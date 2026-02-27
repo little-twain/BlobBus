@@ -96,7 +96,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, store *Store, id string) 
 	}
 	defer file.Close()
 
-	writeBlobHeaders(w, meta)
+	writeBlobHeaders(w, meta, true)
 	w.WriteHeader(http.StatusOK)
 	_, _ = io.Copy(w, file)
 }
@@ -112,16 +112,16 @@ func handleHead(w http.ResponseWriter, r *http.Request, store *Store, id string)
 		return
 	}
 
-	writeBlobHeaders(w, meta)
+	writeBlobHeaders(w, meta, false)
 	w.WriteHeader(http.StatusOK)
 }
 
-func writeBlobHeaders(w http.ResponseWriter, meta BlobMeta) {
+func writeBlobHeaders(w http.ResponseWriter, meta BlobMeta, defaultContentType bool) {
 	w.Header().Set("Content-Length", strconv.FormatInt(meta.Size, 10))
-	if meta.ContentType == "" {
-		w.Header().Set("Content-Type", "application/octet-stream")
-	} else {
+	if meta.ContentType != "" {
 		w.Header().Set("Content-Type", meta.ContentType)
+	} else if defaultContentType {
+		w.Header().Set("Content-Type", "application/octet-stream")
 	}
 	w.Header().Set("ETag", meta.ETag)
 }
