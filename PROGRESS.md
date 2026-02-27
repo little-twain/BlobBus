@@ -23,6 +23,7 @@ Deliver BlobBus according to `codex.md` milestones with incremental verifiable c
 - 2026-02-27: refined `G115` mitigation to avoid risky casts by bounds-checking `Bavail` then converting once with explicit safety annotation.
 - 2026-02-27: re-enabled strict govulncheck gating in `security.yml` (no `continue-on-error`) for validation run.
 - 2026-02-27: aligned CI/Security/Docker toolchains to Go `1.26.x` to match strict vulnerability gating with actual build artifacts.
+- 2026-02-27: bumped CI golangci-lint to `latest` to resolve Go 1.26 export format compatibility (`unsupported version: 2`).
 
 ## Notes
 - Commit cadence: milestone-based progress commits.
