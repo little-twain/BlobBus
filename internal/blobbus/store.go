@@ -2,7 +2,7 @@ package blobbus
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/md5" // #nosec G501 -- BlobBus spec requires MD5 ETag for interoperability.
 	crand "crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -67,10 +67,10 @@ func NewStore(cfg Config) (*Store, error) {
 }
 
 func (s *Store) prepareDirs() error {
-	if err := os.MkdirAll(s.dataDir, 0o755); err != nil {
+	if err := os.MkdirAll(s.dataDir, 0o700); err != nil {
 		return fmt.Errorf("create data dir: %w", err)
 	}
-	if err := os.MkdirAll(s.tmpDir, 0o755); err != nil {
+	if err := os.MkdirAll(s.tmpDir, 0o700); err != nil {
 		return fmt.Errorf("create tmp dir: %w", err)
 	}
 	return nil
@@ -240,6 +240,7 @@ func (s *Store) writeTempBlob(ctx context.Context, path string, body io.Reader, 
 		_ = file.Close()
 	}()
 
+	// #nosec G401 -- BlobBus API requires MD5 digest as ETag.
 	sum := md5.New()
 	buf := make([]byte, 64*1024)
 	remaining := size

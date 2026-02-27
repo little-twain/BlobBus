@@ -24,8 +24,8 @@ profile.cov
 go.work
 go.work.sum
 
-# Build output
-blobbus
+# Build output (root binary from local go build)
+/blobbus
 
 # env file
 .env
