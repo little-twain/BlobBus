@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -232,6 +233,7 @@ func (s *Store) ensureCapacity(incomingSize int64) error {
 }
 
 func (s *Store) writeTempBlob(ctx context.Context, path string, body io.Reader, size int64) (string, error) {
+	// #nosec G304 -- path is generated internally under s.tmpDir, never from user input.
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return "", fmt.Errorf("open temp file: %w", err)
@@ -320,5 +322,15 @@ func freeBytesOnFS(path string) (int64, error) {
 	if err := syscall.Statfs(path, &stat); err != nil {
 		return 0, err
 	}
-	return int64(stat.Bavail) * int64(stat.Bsize), nil
+
+	blocks := uint64(stat.Bavail)
+	blockSize := uint64(stat.Bsize)
+	if blocks == 0 || blockSize == 0 {
+		return 0, nil
+	}
+	if blocks > math.MaxInt64/blockSize {
+		return math.MaxInt64, nil
+	}
+
+	return int64(blocks * blockSize), nil
 }
