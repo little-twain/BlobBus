@@ -1,5 +1,9 @@
 # BlobBus
 
+[![CI](https://github.com/little-twain/BlobBus/actions/workflows/ci.yml/badge.svg)](https://github.com/little-twain/BlobBus/actions/workflows/ci.yml)
+[![Security](https://github.com/little-twain/BlobBus/actions/workflows/security.yml/badge.svg)](https://github.com/little-twain/BlobBus/actions/workflows/security.yml)
+[![Docker Publish](https://github.com/little-twain/BlobBus/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/little-twain/BlobBus/actions/workflows/docker-publish.yml)
+
 BlobBus is a minimal container-to-container blob exchange service.
 
 ## Features
@@ -40,6 +44,22 @@ Base path: `/v1`
 
 - `GET /healthz`
   - `200 OK`
+
+## Project Structure
+
+```
+BlobBus/
+├── cmd/blobbus/main.go        # Application entry point
+├── internal/blobbus/
+│   ├── config.go              # Environment-based configuration
+│   ├── errors.go              # Sentinel error definitions
+│   ├── handler.go             # HTTP handlers (upload/download/head/health)
+│   ├── id.go                  # Base64url ID generation and validation
+│   └── store.go               # Blob storage engine with FIFO eviction
+├── scripts/integration.sh     # End-to-end integration test script
+├── Dockerfile                 # Multi-stage Docker build
+└── go.mod                     # Go module definition
+```
 
 ## Configuration
 
@@ -90,4 +110,31 @@ volumes:
 volumeMounts:
 - name: blobbus-tmpfs
   mountPath: /var/lib/blobbus
+```
+
+## CI/CD
+
+GitHub Actions automates the full pipeline on every push and pull request:
+
+| Workflow | Trigger | Description |
+|---|---|---|
+| **CI** | push / PR to `main` | Lint (`golangci-lint`), unit tests with race detection, build, integration tests |
+| **Security** | push / PR to `main` + weekly schedule | `govulncheck` (Go vulnerability database), `gosec` (static security analysis), CodeQL |
+| **Docker Publish** | push to `main` / version tags (`v*`) | Multi-arch Docker image (`linux/amd64`, `linux/arm64`) pushed to `ghcr.io` |
+
+### Using the published Docker image
+
+```bash
+docker pull ghcr.io/little-twain/blobbus:main
+docker run \
+  --tmpfs /var/lib/blobbus:rw,size=134217728 \
+  -e CAP_BYTES=134217728 \
+  -p 8080:8080 \
+  ghcr.io/little-twain/blobbus:main
+```
+
+To use a specific version tag:
+
+```bash
+docker pull ghcr.io/little-twain/blobbus:v1.0.0
 ```
