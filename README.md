@@ -41,6 +41,22 @@ Base path: `/v1`
 - `GET /healthz`
   - `200 OK`
 
+## Project Structure
+
+```
+BlobBus/
+├── cmd/blobbus/main.go        # Application entry point
+├── internal/blobbus/
+│   ├── config.go              # Environment-based configuration
+│   ├── errors.go              # Sentinel error definitions
+│   ├── handler.go             # HTTP handlers (upload/download/head/health)
+│   ├── id.go                  # Base64url ID generation and validation
+│   └── store.go               # Blob storage engine with FIFO eviction
+├── scripts/integration.sh     # End-to-end integration test script
+├── Dockerfile                 # Multi-stage Docker build
+└── go.mod                     # Go module definition
+```
+
 ## Configuration
 
 - `CAP_BYTES` (required)
