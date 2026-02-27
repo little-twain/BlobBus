@@ -15,6 +15,7 @@ Deliver BlobBus according to `codex.md` milestones with incremental verifiable c
 - 2026-02-27: `GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod go test ./...` (pass)
 - 2026-02-27: `GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod CGO_ENABLED=0 go build ./cmd/blobbus` (pass)
 - 2026-02-27: `./scripts/integration.sh` (pass)
+- 2026-02-27: hardening pass added tests for upload gate serialization, multi-eviction FIFO order, and reader-open-FD survival during eviction.
 
 ## Notes
 - Commit cadence: milestone-based progress commits.
