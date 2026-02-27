@@ -61,7 +61,7 @@ func NewStore(cfg Config) (*Store, error) {
 	}
 
 	// Startup cleanup is best-effort.
-	s.cleanTmpPartFiles()
+	_ = s.cleanTmpPartFiles()
 
 	return s, nil
 }
