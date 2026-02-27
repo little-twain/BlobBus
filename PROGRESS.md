@@ -17,6 +17,7 @@ Deliver BlobBus according to `codex.md` milestones with incremental verifiable c
 - 2026-02-27: `./scripts/integration.sh` (pass)
 - 2026-02-27: hardening pass added tests for upload gate serialization, multi-eviction FIFO order, and reader-open-FD survival during eviction.
 - 2026-02-27: full-flow HTTP tests added for non-LRU FIFO behavior, concurrent multi-client upload/download, and upload gate blocking semantics.
+- 2026-02-27: CI hardening: integration script switched to build+run binary with longer startup wait and health failure logs; setup-go cache warnings removed in CI workflow.
 
 ## Notes
 - Commit cadence: milestone-based progress commits.

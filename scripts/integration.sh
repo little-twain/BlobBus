@@ -6,6 +6,9 @@ TMP_DIR="$(mktemp -d)"
 PORT=$((20000 + RANDOM % 10000))
 ADDR="127.0.0.1:${PORT}"
 BASE_URL="http://${ADDR}"
+BIN_PATH="${TMP_DIR}/blobbus"
+GO_CACHE_DIR="${TMP_DIR}/gocache"
+GO_MOD_CACHE_DIR="${TMP_DIR}/gomodcache"
 
 cleanup() {
   if [[ -n "${SERVER_PID:-}" ]]; then
@@ -34,21 +37,34 @@ extract_json_field() {
 
 cd "${ROOT_DIR}"
 
+GOCACHE="${GO_CACHE_DIR}" \
+GOMODCACHE="${GO_MOD_CACHE_DIR}" \
+go build -o "${BIN_PATH}" ./cmd/blobbus
+
 CAP_BYTES=8 \
 DATA_DIR="${TMP_DIR}/data" \
 LISTEN_ADDR="${ADDR}" \
-GOCACHE="${TMP_DIR}/gocache" \
-GOMODCACHE="${TMP_DIR}/gomodcache" \
-go run ./cmd/blobbus >"${TMP_DIR}/server.log" 2>&1 &
+GOCACHE="${GO_CACHE_DIR}" \
+GOMODCACHE="${GO_MOD_CACHE_DIR}" \
+"${BIN_PATH}" >"${TMP_DIR}/server.log" 2>&1 &
 SERVER_PID=$!
 
-for _ in {1..100}; do
+for _ in {1..300}; do
+  if ! kill -0 "${SERVER_PID}" >/dev/null 2>&1; then
+    echo "blobbus process exited before becoming healthy" >&2
+    cat "${TMP_DIR}/server.log" >&2 || true
+    exit 1
+  fi
   if curl -sSf "${BASE_URL}/healthz" >/dev/null 2>&1; then
     break
   fi
   sleep 0.1
 done
-curl -sSf "${BASE_URL}/healthz" >/dev/null
+if ! curl -sSf "${BASE_URL}/healthz" >/dev/null; then
+  echo "blobbus did not become healthy in time" >&2
+  cat "${TMP_DIR}/server.log" >&2 || true
+  exit 1
+fi
 
 # Upload A
 status=$(curl -sS -o "${TMP_DIR}/a.json" -w "%{http_code}" -X POST \
