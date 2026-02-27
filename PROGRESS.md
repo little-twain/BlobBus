@@ -20,6 +20,7 @@ Deliver BlobBus according to `codex.md` milestones with incremental verifiable c
 - 2026-02-27: CI hardening: integration script switched to build+run binary with longer startup wait and health failure logs; setup-go cache warnings removed in CI workflow.
 - 2026-02-27: security workflow hardening: govulncheck moved to stable Go and set non-blocking; gosec excludes MD5 checks required by BlobBus spec; storage directories tightened to 0700.
 - 2026-02-27: fixed gosec findings in code path (`G115` statfs overflow-safe conversion, `G304` internal temp-path rationale annotation).
+- 2026-02-27: refined `G115` mitigation to avoid risky casts by bounds-checking `Bavail` then converting once with explicit safety annotation.
 
 ## Notes
 - Commit cadence: milestone-based progress commits.

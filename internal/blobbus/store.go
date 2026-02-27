@@ -323,14 +323,19 @@ func freeBytesOnFS(path string) (int64, error) {
 		return 0, err
 	}
 
-	blocks := uint64(stat.Bavail)
-	blockSize := uint64(stat.Bsize)
-	if blocks == 0 || blockSize == 0 {
+	blockSize := int64(stat.Bsize)
+	if stat.Bavail == 0 || blockSize <= 0 {
 		return 0, nil
 	}
+	if stat.Bavail > uint64(math.MaxInt64) {
+		return math.MaxInt64, nil
+	}
+
+	// #nosec G115 -- guarded by stat.Bavail <= MaxInt64 above.
+	blocks := int64(stat.Bavail)
 	if blocks > math.MaxInt64/blockSize {
 		return math.MaxInt64, nil
 	}
 
-	return int64(blocks * blockSize), nil
+	return blocks * blockSize, nil
 }
